@@ -1,7 +1,7 @@
 /* =========================================================
    Z-NAME STYLE
    Full Working Script
-   320+ Stylish Name Generator
+   Stylish Name Generator
    ========================================================= */
 
 "use strict";
@@ -10,27 +10,27 @@
    DOM ELEMENTS
    ========================================================= */
 
-const nameForm = document.getElementById("nameForm");
-const nameInput = document.getElementById("nameInput");
-const clearName = document.getElementById("clearName");
-const generateButton = document.getElementById("generateButton");
+let nameForm = null;
+let nameInput = null;
+let clearName = null;
+let generateButton = null;
 
-const previewSection = document.getElementById("previewSection");
-const previewName = document.getElementById("previewName");
+let previewSection = null;
+let previewName = null;
 
-const resultsSection = document.getElementById("resultsSection");
-const resultsContainer = document.getElementById("resultsContainer");
-const resultsTitle = document.getElementById("resultsTitle");
+let resultsSection = null;
+let resultsContainer = null;
+let resultsTitle = null;
 
-const styleFilters = document.getElementById("styleFilters");
+let styleFilters = null;
 
-const toast = document.getElementById("toast");
-const toastMessage = document.getElementById("toastMessage");
+let toast = null;
+let toastMessage = null;
 
-const mobileMenuButton = document.getElementById("mobileMenuButton");
-const mobileMenu = document.getElementById("mobileMenu");
+let mobileMenuButton = null;
+let mobileMenu = null;
 
-const bottomMenuButton = document.getElementById("bottomMenuButton");
+let bottomMenuButton = null;
 
 
 /* =========================================================
@@ -39,7 +39,12 @@ const bottomMenuButton = document.getElementById("bottomMenuButton");
 
 let currentName = "";
 let currentFilter = "all";
+
+let cachedStyles = [];
 let toastTimer = null;
+
+const copyResetTimers = new WeakMap();
+const symbolResetTimers = new WeakMap();
 
 
 /* =========================================================
@@ -47,20 +52,12 @@ let toastTimer = null;
    ========================================================= */
 
 function cleanName(value) {
-    return value
+
+    return String(value ?? "")
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 30);
-}
 
-
-function escapeHTML(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
 
@@ -204,6 +201,7 @@ function convertFont(text, font) {
         return char;
 
     }).join("");
+
 }
 
 
@@ -215,25 +213,31 @@ function spaced(text) {
     return [...text].join(" ");
 }
 
+
 function wide(text) {
     return [...text].join("  ");
 }
+
 
 function dotted(text) {
     return [...text].join("•");
 }
 
+
 function underlined(text) {
     return [...text].join("̲");
 }
+
 
 function strike(text) {
     return [...text].join("̶");
 }
 
+
 function slash(text) {
     return [...text].join("̷");
 }
+
 
 function doubleUnderline(text) {
     return [...text].join("̳");
@@ -281,6 +285,7 @@ const styleTemplates = [
     { category: "fancy", make: n => `꧁༺ ${n} ༻꧂` },
     { category: "fancy", make: n => `꧁༒ ${n} ༒꧂` },
 
+
     /* ---------------- GAMING ---------------- */
 
     { category: "gaming", make: n => `亗 ${n} 亗` },
@@ -288,7 +293,6 @@ const styleTemplates = [
     { category: "gaming", make: n => `亗〆${n}〆亗` },
     { category: "gaming", make: n => `乂 ${n} 乂` },
     { category: "gaming", make: n => `乂『${n}』乂` },
-    { category: "gaming", make: n => `乂 ${n} 乂` },
     { category: "gaming", make: n => `〆 ${n} 〆` },
     { category: "gaming", make: n => `メ ${n} メ` },
     { category: "gaming", make: n => `彡 ${n} 彡` },
@@ -313,6 +317,7 @@ const styleTemplates = [
     { category: "gaming", make: n => `⚔︎『${n}』⚔︎` },
     { category: "gaming", make: n => `☯ ${n} ☯` },
     { category: "gaming", make: n => `☬ ${n} ☬` },
+
 
     /* ---------------- ATTITUDE ---------------- */
 
@@ -347,6 +352,7 @@ const styleTemplates = [
     { category: "attitude", make: n => `『☠ ${n} ☠』` },
     { category: "attitude", make: n => `『💀 ${n} 💀』` },
 
+
     /* ---------------- SYMBOLS ---------------- */
 
     { category: "symbols", make: n => `♡ ${n} ♡` },
@@ -378,13 +384,13 @@ const styleTemplates = [
     { category: "symbols", make: n => `☬ ${n} ☬` },
     { category: "symbols", make: n => `࿐ ${n} ࿐` },
     { category: "symbols", make: n => `༺ ${n} ༻` },
-    { category: "symbols", make: n => `༒ ${n} ༒` },
+    { category: "symbols", make: n => `༒ ${n} ༒` }
 
 ];
 
 
 /* =========================================================
-   ADD MANY FONT + SYMBOL COMBINATIONS
+   FONT + SYMBOL COMBINATIONS
    ========================================================= */
 
 const fontNames = [
@@ -401,6 +407,7 @@ const fontNames = [
     "boldSans",
     "smallCaps"
 ];
+
 
 const wrappers = [
 
@@ -433,6 +440,7 @@ const wrappers = [
     ["♥", "♥"],
     ["ღ", "ღ"],
     ["❥", "❥"]
+
 ];
 
 
@@ -440,7 +448,7 @@ const wrappers = [
    GENERATE FONT COMBINATIONS
    ========================================================= */
 
-fontNames.forEach((fontName, fontIndex) => {
+fontNames.forEach(fontName => {
 
     wrappers.forEach((wrapper, wrapperIndex) => {
 
@@ -459,7 +467,9 @@ fontNames.forEach((fontName, fontIndex) => {
         }
 
         styleTemplates.push({
-            category: category,
+
+            category,
+
             make: function(name) {
 
                 const styled = convertFont(name, fontName);
@@ -467,6 +477,7 @@ fontNames.forEach((fontName, fontIndex) => {
                 return `${wrapper[0]}${styled}${wrapper[1]}`;
 
             }
+
         });
 
     });
@@ -478,7 +489,7 @@ fontNames.forEach((fontName, fontIndex) => {
    SPECIAL SPACING STYLES
    ========================================================= */
 
-const specialStyles = [
+styleTemplates.push(
 
     {
         category: "fancy",
@@ -560,9 +571,7 @@ const specialStyles = [
         make: n => `🔥 ${spaced(n)} 🔥`
     }
 
-];
-
-styleTemplates.push(...specialStyles);
+);
 
 
 /* =========================================================
@@ -570,6 +579,7 @@ styleTemplates.push(...specialStyles);
    ========================================================= */
 
 const extraPrefixes = [
+
     "★",
     "☆",
     "✦",
@@ -602,21 +612,30 @@ const extraPrefixes = [
     "😈",
     "👑",
     "💀"
+
 ];
+
 
 extraPrefixes.forEach((symbol, index) => {
 
+    let category;
+
+    if (index % 4 === 0) {
+        category = "gaming";
+    } else if (index % 4 === 1) {
+        category = "symbols";
+    } else if (index % 4 === 2) {
+        category = "attitude";
+    } else {
+        category = "fancy";
+    }
+
     styleTemplates.push({
-        category:
-            index % 4 === 0
-                ? "gaming"
-                : index % 4 === 1
-                    ? "symbols"
-                    : index % 4 === 2
-                        ? "attitude"
-                        : "fancy",
+
+        category,
 
         make: n => `${symbol} ${n} ${symbol}`
+
     });
 
 });
@@ -652,26 +671,34 @@ const combinations = [
     ["😈『", "』😈"],
     ["👑『", "』👑"],
     ["💀『", "』💀"]
+
 ];
+
 
 combinations.forEach((combo, index) => {
 
-    fontNames.forEach((fontName) => {
+    fontNames.forEach(fontName => {
+
+        let category;
+
+        if (index % 4 === 0) {
+            category = "gaming";
+        } else if (index % 4 === 1) {
+            category = "attitude";
+        } else if (index % 4 === 2) {
+            category = "symbols";
+        } else {
+            category = "fancy";
+        }
 
         styleTemplates.push({
 
-            category:
-                index % 4 === 0
-                    ? "gaming"
-                    : index % 4 === 1
-                        ? "attitude"
-                        : index % 4 === 2
-                            ? "symbols"
-                            : "fancy",
+            category,
 
             make: function(name) {
 
-                const styledName = convertFont(name, fontName);
+                const styledName =
+                    convertFont(name, fontName);
 
                 return `${combo[0]}${styledName}${combo[1]}`;
 
@@ -702,7 +729,8 @@ function buildStyles(name) {
                 return;
             }
 
-            const cleanResult = String(result).trim();
+            const cleanResult =
+                String(result).trim();
 
             if (!cleanResult) {
                 return;
@@ -711,21 +739,80 @@ function buildStyles(name) {
             if (!unique.has(cleanResult)) {
 
                 unique.set(cleanResult, {
+
                     text: cleanResult,
                     category: style.category
+
                 });
 
             }
 
         } catch (error) {
 
-            console.warn("Style error:", error);
+            /*
+             * A single bad template should never
+             * break the complete generator.
+             */
+
+            return;
 
         }
 
     });
 
     return Array.from(unique.values());
+
+}
+
+
+/* =========================================================
+   COPY FALLBACK
+   ========================================================= */
+
+function legacyCopy(text) {
+
+    return new Promise(resolve => {
+
+        const textarea =
+            document.createElement("textarea");
+
+        textarea.value = text;
+
+        textarea.setAttribute(
+            "readonly",
+            ""
+        );
+
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "-9999px";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+
+        document.body.appendChild(textarea);
+
+        textarea.focus();
+        textarea.select();
+
+        let successful = false;
+
+        try {
+
+            successful =
+                document.execCommand("copy");
+
+        } catch (error) {
+
+            successful = false;
+
+        }
+
+        textarea.remove();
+
+        resolve(successful);
+
+    });
+
 }
 
 
@@ -735,38 +822,42 @@ function buildStyles(name) {
 
 async function copyText(text) {
 
+    const value = String(text ?? "");
+
+    if (!value) {
+        showToast("Nothing to copy");
+        return false;
+    }
+
     try {
 
-        if (navigator.clipboard && window.isSecureContext) {
+        if (
+            navigator.clipboard &&
+            window.isSecureContext
+        ) {
 
-            await navigator.clipboard.writeText(text);
+            await navigator.clipboard.writeText(value);
 
-        } else {
+            showToast("Copied!");
 
-            const textarea = document.createElement("textarea");
-
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.left = "-9999px";
-
-            document.body.appendChild(textarea);
-
-            textarea.focus();
-            textarea.select();
-
-            document.execCommand("copy");
-
-            textarea.remove();
+            return true;
 
         }
 
-        showToast("Copied!");
+        const copied =
+            await legacyCopy(value);
 
-        return true;
+        if (copied) {
+
+            showToast("Copied!");
+
+            return true;
+
+        }
+
+        throw new Error("Copy command failed");
 
     } catch (error) {
-
-        console.error("Copy failed:", error);
 
         showToast("Copy failed");
 
@@ -783,21 +874,93 @@ async function copyText(text) {
 
 function showToast(message) {
 
-    if (!toast) {
+    if (!toast || !toastMessage) {
         return;
     }
 
-    toastMessage.textContent = message;
+    toastMessage.textContent =
+        String(message);
 
     toast.classList.add("show");
 
-    clearTimeout(toastTimer);
+    if (toastTimer !== null) {
+
+        clearTimeout(toastTimer);
+
+    }
 
     toastTimer = setTimeout(() => {
 
         toast.classList.remove("show");
 
+        toastTimer = null;
+
     }, 1800);
+
+}
+
+
+/* =========================================================
+   COPY BUTTON UI
+   ========================================================= */
+
+function setCopyButtonState(button, copied) {
+
+    if (!button) {
+        return;
+    }
+
+    if (copied) {
+
+        button.classList.add("copied");
+
+        button.setAttribute(
+            "aria-label",
+            "Copied"
+        );
+
+        button.innerHTML = "";
+
+        const icon =
+            document.createElement("span");
+
+        icon.className = "copy-icon";
+        icon.textContent = "✓";
+
+        const text =
+            document.createElement("span");
+
+        text.textContent = "Copied!";
+
+        button.appendChild(icon);
+        button.appendChild(text);
+
+        return;
+
+    }
+
+    button.classList.remove("copied");
+
+    button.setAttribute(
+        "aria-label",
+        "Copy name"
+    );
+
+    button.innerHTML = "";
+
+    const icon =
+        document.createElement("span");
+
+    icon.className = "copy-icon";
+    icon.textContent = "📋";
+
+    const text =
+        document.createElement("span");
+
+    text.textContent = "Copy";
+
+    button.appendChild(icon);
+    button.appendChild(text);
 
 }
 
@@ -812,75 +975,121 @@ function renderResults(styles) {
         return;
     }
 
-    resultsContainer.innerHTML = "";
+    resultsContainer.replaceChildren();
 
-    if (!styles.length) {
+    if (!Array.isArray(styles) || !styles.length) {
 
-        resultsContainer.innerHTML = `
-            <div class="result-card">
-                <div class="result-name">
-                    No styles found
-                </div>
-            </div>
-        `;
-
-        return;
-    }
-
-    const fragment = document.createDocumentFragment();
-
-    styles.forEach((style, index) => {
-
-        const card = document.createElement("article");
+        const card =
+            document.createElement("article");
 
         card.className = "result-card";
 
-        card.style.animationDelay = `${Math.min(index * 0.018, 0.35)}s`;
-
-        const nameDiv = document.createElement("div");
+        const nameDiv =
+            document.createElement("div");
 
         nameDiv.className = "result-name";
+        nameDiv.textContent = "No styles found";
 
+        card.appendChild(nameDiv);
+
+        resultsContainer.appendChild(card);
+
+        return;
+
+    }
+
+    const fragment =
+        document.createDocumentFragment();
+
+    styles.forEach((style, index) => {
+
+        if (!style || !style.text) {
+            return;
+        }
+
+        const card =
+            document.createElement("article");
+
+        card.className = "result-card";
+
+        card.style.animationDelay =
+            `${Math.min(index * 0.018, 0.35)}s`;
+
+        const nameDiv =
+            document.createElement("div");
+
+        nameDiv.className = "result-name";
         nameDiv.textContent = style.text;
 
-        const copyButton = document.createElement("button");
+        const copyButton =
+            document.createElement("button");
 
         copyButton.type = "button";
+        copyButton.className =
+            "copy-result-button";
 
-        copyButton.className = "copy-result-button";
+        copyButton.setAttribute(
+            "aria-label",
+            "Copy name"
+        );
 
-        copyButton.innerHTML = `
-            <span class="copy-icon">📋</span>
-            <span>Copy</span>
-        `;
+        setCopyButtonState(
+            copyButton,
+            false
+        );
 
-        copyButton.addEventListener("click", async () => {
+        copyButton.addEventListener(
+            "click",
+            async () => {
 
-            const copied = await copyText(style.text);
+                const copied =
+                    await copyText(style.text);
 
-            if (copied) {
+                if (!copied) {
+                    return;
+                }
 
-                copyButton.classList.add("copied");
+                setCopyButtonState(
+                    copyButton,
+                    true
+                );
 
-                copyButton.innerHTML = `
-                    <span class="copy-icon">✓</span>
-                    <span>Copied!</span>
-                `;
+                const existingTimer =
+                    copyResetTimers.get(copyButton);
 
-                setTimeout(() => {
+                if (existingTimer) {
 
-                    copyButton.classList.remove("copied");
+                    clearTimeout(existingTimer);
 
-                    copyButton.innerHTML = `
-                        <span class="copy-icon">📋</span>
-                        <span>Copy</span>
-                    `;
+                }
 
-                }, 1400);
+                const timer =
+                    setTimeout(() => {
+
+                        if (
+                            copyButton.isConnected
+                        ) {
+
+                            setCopyButtonState(
+                                copyButton,
+                                false
+                            );
+
+                        }
+
+                        copyResetTimers.delete(
+                            copyButton
+                        );
+
+                    }, 1400);
+
+                copyResetTimers.set(
+                    copyButton,
+                    timer
+                );
 
             }
-
-        });
+        );
 
         card.appendChild(nameDiv);
         card.appendChild(copyButton);
@@ -904,23 +1113,37 @@ function applyFilter() {
         return;
     }
 
-    const allStyles = buildStyles(currentName);
+    /*
+     * Use cached styles instead of rebuilding
+     * every time the user changes a filter.
+     */
+
+    const allStyles =
+        cachedStyles.length
+            ? cachedStyles
+            : buildStyles(currentName);
 
     let filteredStyles = allStyles;
 
     if (currentFilter !== "all") {
 
-        filteredStyles = allStyles.filter(style => {
+        filteredStyles =
+            allStyles.filter(style => {
 
-            return style.category === currentFilter;
+                return (
+                    style.category ===
+                    currentFilter
+                );
 
-        });
+            });
 
     }
 
     renderResults(filteredStyles);
 
-    updateResultsTitle(filteredStyles.length);
+    updateResultsTitle(
+        filteredStyles.length
+    );
 
 }
 
@@ -935,7 +1158,49 @@ function updateResultsTitle(count) {
         return;
     }
 
-    resultsTitle.textContent = `Stylish Names (${count})`;
+    const safeCount =
+        Number.isFinite(count)
+            ? count
+            : 0;
+
+    resultsTitle.textContent =
+        `Stylish Names (${safeCount})`;
+
+}
+
+
+/* =========================================================
+   UPDATE FILTER UI
+   ========================================================= */
+
+function updateFilterButtons() {
+
+    if (!styleFilters) {
+        return;
+    }
+
+    const buttons =
+        styleFilters.querySelectorAll(
+            ".filter-button"
+        );
+
+    buttons.forEach(button => {
+
+        const isActive =
+            (button.dataset.filter || "all") ===
+            currentFilter;
+
+        button.classList.toggle(
+            "active",
+            isActive
+        );
+
+        button.setAttribute(
+            "aria-pressed",
+            String(isActive)
+        );
+
+    });
 
 }
 
@@ -944,146 +1209,141 @@ function updateResultsTitle(count) {
    GENERATE
    ========================================================= */
 
-function generateNames() {
+function generateNames(options = {}) {
 
-    const value = cleanName(nameInput.value);
+    if (!nameInput) {
+        return;
+    }
+
+    const value =
+        cleanName(nameInput.value);
 
     if (!value) {
 
-        nameInput.focus();
+        if (
+            document.activeElement !==
+            nameInput
+        ) {
 
-        showToast("Please enter your name");
+            nameInput.focus();
+
+        }
+
+        showToast(
+            "Please enter your name"
+        );
 
         return;
 
     }
 
     currentName = value;
-
     currentFilter = "all";
 
-    /* Update preview */
+    /*
+     * Build styles only once for this name.
+     */
+
+    cachedStyles =
+        buildStyles(value);
+
+    /* -----------------------------------------
+       Update input
+       ----------------------------------------- */
+
+    if (nameInput.value !== value) {
+
+        nameInput.value = value;
+
+    }
+
+    /* -----------------------------------------
+       Update clear button
+       ----------------------------------------- */
+
+    if (clearName) {
+
+        clearName.hidden = false;
+
+    }
+
+    /* -----------------------------------------
+       Update preview
+       ----------------------------------------- */
 
     if (previewName) {
-        previewName.textContent = value;
+
+        previewName.textContent =
+            value;
+
     }
 
     if (previewSection) {
+
         previewSection.hidden = false;
+
     }
 
-    /* Build all styles */
-
-    const styles = buildStyles(value);
-
-    /* Show results */
+    /* -----------------------------------------
+       Show results
+       ----------------------------------------- */
 
     if (resultsSection) {
+
         resultsSection.hidden = false;
-    }
-
-    /* Reset filter buttons */
-
-    if (styleFilters) {
-
-        const buttons = styleFilters.querySelectorAll(".filter-button");
-
-        buttons.forEach(button => {
-
-            button.classList.toggle(
-                "active",
-                button.dataset.filter === "all"
-            );
-
-        });
 
     }
 
-    renderResults(styles);
+    /* -----------------------------------------
+       Reset filter buttons
+       ----------------------------------------- */
 
-    updateResultsTitle(styles.length);
+    updateFilterButtons();
 
-    /* Scroll to results */
+    /* -----------------------------------------
+       Render results
+       ----------------------------------------- */
 
-    setTimeout(() => {
+    renderResults(cachedStyles);
 
-        if (resultsSection) {
-
-            resultsSection.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-        }
-
-    }, 80);
-
-}
-
-
-/* =========================================================
-   FORM SUBMIT
-   ========================================================= */
-
-if (nameForm) {
-
-    nameForm.addEventListener("submit", event => {
-
-        event.preventDefault();
-
-        generateNames();
-
-    });
-
-}
-
-
-/* =========================================================
-   LIVE INPUT
-   ========================================================= */
-
-if (nameInput) {
-
-    nameInput.addEventListener("input", () => {
-
-        nameInput.value = nameInput.value.slice(0, 30);
-
-        if (clearName) {
-
-            clearName.hidden = nameInput.value.length === 0;
-
-        }
-
-        /*
-         * Live preview while typing.
-         * Results are generated only when user presses Generate.
-         */
-
-        if (previewName && nameInput.value.trim()) {
-
-            previewName.textContent =
-                cleanName(nameInput.value);
-
-        }
-
-    });
-
+    updateResultsTitle(
+        cachedStyles.length
+    );
 
     /*
-     * Press Enter to generate
+     * Scroll only when requested.
+     *
+     * This keeps the generator reusable
+     * from trending styles without forcing
+     * unwanted scrolling in every situation.
      */
 
-    nameInput.addEventListener("keydown", event => {
+    if (options.scroll !== false) {
 
-        if (event.key === "Enter") {
+        window.setTimeout(() => {
 
-            event.preventDefault();
+            if (!resultsSection) {
+                return;
+            }
 
-            generateNames();
+            const behavior =
+                window.matchMedia &&
+                window.matchMedia(
+                    "(prefers-reduced-motion: reduce)"
+                ).matches
+                    ? "auto"
+                    : "smooth";
 
-        }
+            resultsSection.scrollIntoView({
 
-    });
+                behavior,
+                block: "start"
+
+            });
+
+        }, 80);
+
+    }
 
 }
 
@@ -1092,58 +1352,53 @@ if (nameInput) {
    CLEAR NAME
    ========================================================= */
 
-if (clearName) {
+function clearCurrentName() {
 
-    clearName.addEventListener("click", () => {
+    if (!nameInput) {
+        return;
+    }
 
-        nameInput.value = "";
+    nameInput.value = "";
 
-        currentName = "";
+    currentName = "";
+    currentFilter = "all";
+    cachedStyles = [];
+
+    if (clearName) {
 
         clearName.hidden = true;
 
-        nameInput.focus();
+    }
 
-        if (previewName) {
-            previewName.textContent = "Your Name";
-        }
+    if (previewName) {
 
-    });
+        previewName.textContent =
+            "Your Name";
 
-}
+    }
 
+    if (previewSection) {
 
-/* =========================================================
-   FILTER BUTTONS
-   ========================================================= */
+        previewSection.hidden = true;
 
-if (styleFilters) {
+    }
 
-    styleFilters.addEventListener("click", event => {
+    if (resultsSection) {
 
-        const button = event.target.closest(".filter-button");
+        resultsSection.hidden = true;
 
-        if (!button) {
-            return;
-        }
+    }
 
-        currentFilter = button.dataset.filter || "all";
+    if (resultsContainer) {
 
-        const buttons =
-            styleFilters.querySelectorAll(".filter-button");
+        resultsContainer.replaceChildren();
 
-        buttons.forEach(btn => {
+    }
 
-            btn.classList.toggle(
-                "active",
-                btn === button
-            );
+    updateResultsTitle(0);
+    updateFilterButtons();
 
-        });
-
-        applyFilter();
-
-    });
+    nameInput.focus();
 
 }
 
@@ -1152,105 +1407,146 @@ if (styleFilters) {
    SYMBOL COPY
    ========================================================= */
 
-const symbolCards =
-    document.querySelectorAll(".symbol-card");
+async function handleSymbolCopy(card) {
 
-symbolCards.forEach(card => {
+    if (!card) {
+        return;
+    }
 
-    card.addEventListener("click", async () => {
+    const symbol =
+        card.dataset.symbol;
 
-        const symbol = card.dataset.symbol;
+    if (!symbol) {
+        return;
+    }
 
-        if (!symbol) {
-            return;
-        }
+    const copied =
+        await copyText(symbol);
 
-        const copied = await copyText(symbol);
+    if (!copied) {
+        return;
+    }
 
-        if (copied) {
+    card.classList.add("copied");
 
-            card.classList.add("copied");
+    const small =
+        card.querySelector("small");
 
-            const small = card.querySelector("small");
+    if (small) {
 
-            if (small) {
-                small.textContent = "Copied!";
+        small.dataset.originalText =
+            small.dataset.originalText ||
+            small.textContent;
+
+        small.textContent =
+            "Copied!";
+
+    }
+
+    const existingTimer =
+        symbolResetTimers.get(card);
+
+    if (existingTimer) {
+
+        clearTimeout(existingTimer);
+
+    }
+
+    const timer =
+        setTimeout(() => {
+
+            if (!card.isConnected) {
+                return;
             }
 
-            setTimeout(() => {
+            card.classList.remove(
+                "copied"
+            );
 
-                card.classList.remove("copied");
+            if (small) {
 
-                if (small) {
-                    small.textContent = "Copy";
-                }
+                small.textContent =
+                    small.dataset.originalText ||
+                    "Copy";
 
-            }, 1200);
+            }
 
-        }
+            symbolResetTimers.delete(
+                card
+            );
 
-    });
+        }, 1200);
 
-});
+    symbolResetTimers.set(
+        card,
+        timer
+    );
+
+}
 
 
 /* =========================================================
-   TRENDING STYLE BUTTONS
+   TRENDING STYLE BUTTON
    ========================================================= */
 
-const useStyleButtons =
-    document.querySelectorAll(".use-style-button");
+function useTrendingStyle(button) {
 
-useStyleButtons.forEach(button => {
+    if (!button || !nameInput) {
+        return;
+    }
 
-    button.addEventListener("click", () => {
+    const template =
+        button.dataset.template;
 
-        const template = button.dataset.template;
+    if (!template) {
+        return;
+    }
 
-        if (!template) {
-            return;
-        }
+    const entered =
+        cleanName(nameInput.value) ||
+        currentName ||
+        "Your Name";
 
-        /*
-         * If user has already entered a name,
-         * use that name.
-         *
-         * Otherwise use the current input.
-         */
+    const styled =
+        template.replace(
+            /\{name\}/gi,
+            entered
+        );
 
-        const entered =
-            cleanName(nameInput.value) ||
-            currentName ||
-            "Your Name";
+    /*
+     * Copy the selected trending style.
+     */
 
-        const styled =
-            template.replace(/\{name\}/gi, entered);
+    copyText(styled);
 
-        copyText(styled);
+    /*
+     * Put the name into generator.
+     */
 
-        /* Put template name into input */
+    nameInput.value =
+        entered;
 
-        if (nameInput) {
+    if (clearName) {
 
-            nameInput.value = entered;
+        clearName.hidden = false;
 
-            if (clearName) {
-                clearName.hidden = false;
-            }
+    }
 
-        }
+    currentName =
+        entered;
 
-        currentName = entered;
+    /*
+     * Generate the full list.
+     * Do not force an additional scroll
+     * because the button is already near
+     * the generator/results area.
+     */
 
-        /*
-         * Generate complete results also.
-         */
-
-        generateNames();
-
+    generateNames({
+        scroll: true
     });
 
-});
+}
 
 
 /* =========================================================
@@ -1263,9 +1559,13 @@ function closeMobileMenu() {
         return;
     }
 
-    mobileMenu.classList.remove("open");
+    mobileMenu.classList.remove(
+        "open"
+    );
 
-    mobileMenuButton.classList.remove("open");
+    mobileMenuButton.classList.remove(
+        "open"
+    );
 
     mobileMenuButton.setAttribute(
         "aria-expanded",
@@ -1282,179 +1582,688 @@ function toggleMobileMenu() {
     }
 
     const isOpen =
-        mobileMenu.classList.toggle("open");
+        !mobileMenu.classList.contains(
+            "open"
+        );
 
-    mobileMenuButton.classList.toggle(
-        "open",
-        isOpen
-    );
+    if (isOpen) {
 
-    mobileMenuButton.setAttribute(
-        "aria-expanded",
-        String(isOpen)
-    );
+        mobileMenu.classList.add(
+            "open"
+        );
 
-}
+        mobileMenuButton.classList.add(
+            "open"
+        );
 
+        mobileMenuButton.setAttribute(
+            "aria-expanded",
+            "true"
+        );
 
-if (mobileMenuButton) {
-
-    mobileMenuButton.addEventListener(
-        "click",
-        toggleMobileMenu
-    );
-
-}
-
-
-/* Close mobile menu after navigation */
-
-document
-    .querySelectorAll(".mobile-nav-link")
-    .forEach(link => {
-
-        link.addEventListener("click", () => {
-
-            closeMobileMenu();
-
-        });
-
-    });
-
-
-/* Close menu when clicking outside */
-
-document.addEventListener("click", event => {
-
-    if (!mobileMenu || !mobileMenuButton) {
-        return;
-    }
-
-    if (
-        !mobileMenu.contains(event.target) &&
-        !mobileMenuButton.contains(event.target)
-    ) {
+    } else {
 
         closeMobileMenu();
 
     }
 
-});
-
-
-/* =========================================================
-   BOTTOM MORE BUTTON
-   ========================================================= */
-
-if (bottomMenuButton) {
-
-    bottomMenuButton.addEventListener("click", () => {
-
-        toggleMobileMenu();
-
-    });
-
 }
 
 
 /* =========================================================
-   BOTTOM NAV ACTIVE STATE
+   NAVIGATION ACTIVE STATE
    ========================================================= */
 
-const bottomNavItems =
-    document.querySelectorAll(".bottom-nav-item");
+function updateActiveNavigation() {
 
-bottomNavItems.forEach(item => {
+    const hash =
+        window.location.hash;
 
-    if (item.tagName.toLowerCase() === "button") {
+    const navLinks =
+        document.querySelectorAll(
+            ".nav-link"
+        );
+
+    const bottomNavItems =
+        document.querySelectorAll(
+            ".bottom-nav-item"
+        );
+
+    /*
+     * If there is no hash, keep the first
+     * normal navigation item active only
+     * when explicitly marked in HTML.
+     */
+
+    if (!hash) {
         return;
     }
 
-    item.addEventListener("click", () => {
+    navLinks.forEach(link => {
 
-        bottomNavItems.forEach(nav => {
+        const href =
+            link.getAttribute("href") || "";
 
-            nav.classList.remove("active");
-
-        });
-
-        item.classList.add("active");
-
-    });
-
-});
-
-
-/* =========================================================
-   DESKTOP NAV ACTIVE STATE
-   ========================================================= */
-
-const navLinks =
-    document.querySelectorAll(".nav-link");
-
-navLinks.forEach(link => {
-
-    link.addEventListener("click", () => {
-
-        navLinks.forEach(nav => {
-
-            nav.classList.remove("active");
-
-        });
-
-        link.classList.add("active");
+        link.classList.toggle(
+            "active",
+            href === hash
+        );
 
     });
 
-});
+    bottomNavItems.forEach(item => {
+
+        if (
+            item.tagName.toLowerCase() ===
+            "button"
+        ) {
+            return;
+        }
+
+        const href =
+            item.getAttribute("href") || "";
+
+        item.classList.toggle(
+            "active",
+            href === hash
+        );
+
+    });
+
+}
 
 
 /* =========================================================
    FAQ
    ========================================================= */
 
-const faqItems =
-    document.querySelectorAll(".faq-item");
+function setupFAQ() {
 
-faqItems.forEach(item => {
+    const faqItems =
+        document.querySelectorAll(
+            ".faq-item"
+        );
 
-    item.addEventListener("toggle", () => {
+    faqItems.forEach(item => {
 
-        if (!item.open) {
-            return;
-        }
+        item.addEventListener(
+            "toggle",
+            () => {
 
-        faqItems.forEach(other => {
+                if (!item.open) {
+                    return;
+                }
 
-            if (other !== item) {
+                faqItems.forEach(other => {
 
-                other.removeAttribute("open");
+                    if (other !== item) {
+
+                        other.removeAttribute(
+                            "open"
+                        );
+
+                    }
+
+                });
 
             }
-
-        });
+        );
 
     });
 
-});
+}
 
 
 /* =========================================================
-   HASH NAVIGATION
+   INITIALIZE DOM ELEMENTS
    ========================================================= */
 
-window.addEventListener("hashchange", () => {
+function cacheDOMElements() {
 
-    closeMobileMenu();
+    nameForm =
+        document.getElementById(
+            "nameForm"
+        );
 
-});
+    nameInput =
+        document.getElementById(
+            "nameInput"
+        );
+
+    clearName =
+        document.getElementById(
+            "clearName"
+        );
+
+    generateButton =
+        document.getElementById(
+            "generateButton"
+        );
+
+    previewSection =
+        document.getElementById(
+            "previewSection"
+        );
+
+    previewName =
+        document.getElementById(
+            "previewName"
+        );
+
+    resultsSection =
+        document.getElementById(
+            "resultsSection"
+        );
+
+    resultsContainer =
+        document.getElementById(
+            "resultsContainer"
+        );
+
+    resultsTitle =
+        document.getElementById(
+            "resultsTitle"
+        );
+
+    styleFilters =
+        document.getElementById(
+            "styleFilters"
+        );
+
+    toast =
+        document.getElementById(
+            "toast"
+        );
+
+    toastMessage =
+        document.getElementById(
+            "toastMessage"
+        );
+
+    mobileMenuButton =
+        document.getElementById(
+            "mobileMenuButton"
+        );
+
+    mobileMenu =
+        document.getElementById(
+            "mobileMenu"
+        );
+
+    bottomMenuButton =
+        document.getElementById(
+            "bottomMenuButton"
+        );
+
+}
 
 
 /* =========================================================
-   PAGE LOAD
+   FORM EVENTS
    ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+function setupFormEvents() {
+
+    if (nameForm) {
+
+        nameForm.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                generateNames();
+
+            }
+        );
+
+    }
+
+
+    if (generateButton) {
+
+        generateButton.addEventListener(
+            "click",
+            event => {
+
+                /*
+                 * If the button is already inside
+                 * the form, the submit event handles
+                 * generation. This listener exists
+                 * only as a safe fallback for buttons
+                 * outside the form.
+                 */
+
+                if (
+                    !nameForm ||
+                    generateButton.form !== nameForm
+                ) {
+
+                    event.preventDefault();
+
+                    generateNames();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    if (nameInput) {
+
+        nameInput.addEventListener(
+            "input",
+            () => {
+
+                const cleaned =
+                    nameInput.value.slice(
+                        0,
+                        30
+                    );
+
+                if (
+                    nameInput.value !==
+                    cleaned
+                ) {
+
+                    nameInput.value =
+                        cleaned;
+
+                }
+
+                if (clearName) {
+
+                    clearName.hidden =
+                        nameInput.value.length === 0;
+
+                }
+
+                if (
+                    previewName &&
+                    nameInput.value.trim()
+                ) {
+
+                    previewName.textContent =
+                        cleanName(
+                            nameInput.value
+                        );
+
+                }
+
+            }
+        );
+
+
+        nameInput.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    generateNames();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    if (clearName) {
+
+        clearName.addEventListener(
+            "click",
+            clearCurrentName
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FILTER EVENTS
+   ========================================================= */
+
+function setupFilterEvents() {
+
+    if (!styleFilters) {
+        return;
+    }
+
+    styleFilters.addEventListener(
+        "click",
+        event => {
+
+            const button =
+                event.target.closest(
+                    ".filter-button"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            currentFilter =
+                button.dataset.filter ||
+                "all";
+
+            updateFilterButtons();
+
+            applyFilter();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SYMBOL EVENTS
+   ========================================================= */
+
+function setupSymbolEvents() {
+
+    const symbolCards =
+        document.querySelectorAll(
+            ".symbol-card"
+        );
+
+    symbolCards.forEach(card => {
+
+        card.addEventListener(
+            "click",
+            () => {
+
+                handleSymbolCopy(card);
+
+            }
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   TRENDING STYLE EVENTS
+   ========================================================= */
+
+function setupTrendingEvents() {
+
+    const useStyleButtons =
+        document.querySelectorAll(
+            ".use-style-button"
+        );
+
+    useStyleButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                useTrendingStyle(
+                    button
+                );
+
+            }
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   MOBILE MENU EVENTS
+   ========================================================= */
+
+function setupMobileMenuEvents() {
+
+    if (mobileMenuButton) {
+
+        mobileMenuButton.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+                toggleMobileMenu();
+
+            }
+        );
+
+    }
+
+
+    if (mobileMenu) {
+
+        mobileMenu.addEventListener(
+            "click",
+            event => {
+
+                const link =
+                    event.target.closest(
+                        ".mobile-nav-link"
+                    );
+
+                if (link) {
+
+                    closeMobileMenu();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+     * Close when clicking outside.
+     */
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                !mobileMenu ||
+                !mobileMenuButton
+            ) {
+                return;
+            }
+
+            if (
+                !mobileMenu.contains(
+                    event.target
+                ) &&
+                !mobileMenuButton.contains(
+                    event.target
+                )
+            ) {
+
+                closeMobileMenu();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Escape key closes the menu.
+     */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeMobileMenu();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Keep the menu closed when moving
+     * between desktop and mobile layouts.
+     */
+
+    window.addEventListener(
+        "resize",
+        () => {
+
+            if (
+                window.innerWidth > 700
+            ) {
+
+                closeMobileMenu();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Bottom More button opens the same
+     * mobile menu.
+     */
+
+    if (bottomMenuButton) {
+
+        bottomMenuButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                toggleMobileMenu();
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   NAV EVENTS
+   ========================================================= */
+
+function setupNavigationEvents() {
+
+    const bottomNavItems =
+        document.querySelectorAll(
+            ".bottom-nav-item"
+        );
+
+    bottomNavItems.forEach(item => {
+
+        /*
+         * More button is controlled separately.
+         */
+
+        if (
+            item.tagName.toLowerCase() ===
+            "button"
+        ) {
+            return;
+        }
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                bottomNavItems.forEach(
+                    nav => {
+
+                        nav.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+                item.classList.add(
+                    "active"
+                );
+
+            }
+        );
+
+    });
+
+
+    const navLinks =
+        document.querySelectorAll(
+            ".nav-link"
+        );
+
+    navLinks.forEach(link => {
+
+        link.addEventListener(
+            "click",
+            () => {
+
+                navLinks.forEach(
+                    nav => {
+
+                        nav.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+                link.classList.add(
+                    "active"
+                );
+
+            }
+        );
+
+    });
+
+
+    window.addEventListener(
+        "hashchange",
+        () => {
+
+            closeMobileMenu();
+
+            updateActiveNavigation();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   INITIAL PAGE STATE
+   ========================================================= */
+
+function setupInitialState() {
 
     if (clearName && nameInput) {
 
@@ -1463,34 +2272,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+
     /*
-     * Make sure result sections remain hidden
-     * until the user generates a name.
+     * Results stay hidden until generation.
      */
 
     if (previewSection) {
+
         previewSection.hidden = true;
+
     }
 
     if (resultsSection) {
+
         resultsSection.hidden = true;
+
     }
 
-});
+
+    /*
+     * Make sure no stale result data
+     * exists when page initially loads.
+     */
+
+    currentName = "";
+    currentFilter = "all";
+    cachedStyles = [];
+
+    updateFilterButtons();
+    updateActiveNavigation();
+
+}
 
 
 /* =========================================================
-   DEBUG / STYLE COUNT
+   INITIALIZE
    ========================================================= */
 
-console.log(
-    "Z-Name Style loaded successfully."
-);
+function init() {
 
-console.log(
-    "Available style templates:",
-    styleTemplates.length
-);
+    cacheDOMElements();
+
+    setupInitialState();
+
+    setupFormEvents();
+
+    setupFilterEvents();
+
+    setupSymbolEvents();
+
+    setupTrendingEvents();
+
+    setupMobileMenuEvents();
+
+    setupNavigationEvents();
+
+    setupFAQ();
+
+}
+
+
+/* =========================================================
+   PAGE LOAD
+   ========================================================= */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        init,
+        { once: true }
+    );
+
+} else {
+
+    init();
+
+}
 
 
 /* =========================================================
