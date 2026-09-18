@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://rajvirsingh13.github.io/Z-Name-style-/sitemap.xml
+Sitemap: https://rajvirjassar.github.io/Z-Name-style-/sitemap.xml
